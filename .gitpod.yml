@@ -1,0 +1,13 @@
+image:
+  file: .gitpod.Dockerfile
+
+tasks:
+  - before: sudo mount -t tmpfs shm -osize=4096m /dev/shm
+  - command: google-chrome
+
+# List the ports to expose. Learn more https://www.gitpod.io/docs/config-ports/
+ports:
+  - port: 5900
+    onOpen: ignore
+  - port: 6080
+    onOpen: open-preview
