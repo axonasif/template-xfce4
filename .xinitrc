@@ -1,33 +1,17 @@
 #!/bin/bash
 #
 
-# export GALLIUM_DRIVER=llvmpipe
-# Make sure XDG_RUNTIME_DIR is unprivilaged
-#chmod +t /tmp;
-
-true 'export XDG_RUNTIME_DIR="/tmp/.boodg";
-mkdir -m 0700 -p "$XDG_RUNTIME_DIR" && chmod +t "$XDG_RUNTIME_DIR";
-#sudo chmod 777 "$XDG_RUNTIME_DIR" && sudo chown -h axon:axon "$XDG_RUNTIME_DIR";
-'
-
-# Re-execute with dbus
-true 'if test ! -v DBUS_LAUNCHED; then {
-	echo "Re-launching self via dbus-launch";
-	DBUS_LAUNCHED=true exec dbus-run-session "$0"; 
-} else {
-	unset DBUS_LAUNCHED;
-} fi'
 
 : "${DISPLAY:=":0"}"
 export DISPLAY
 
-# Load profile
-for file in "/etc/profile" "$HOME/.profile" "/etc/xprofile" "$HOME/.xprofile"; do
-    if [ -f "$file" ]; then
-        echo "Loading profile from $file";
-        . "$file"
-    fi
-done
+# # Load profile
+# for file in "/etc/profile" "$HOME/.profile" "/etc/xprofile" "$HOME/.xprofile"; do
+#     if [ -f "$file" ]; then
+#         echo "Loading profile from $file";
+#         . "$file"
+#     fi
+# done
 
 # Load resources
 for file in "$HOME/.Xresources" "/etc/X11/Xresources"; do
@@ -41,7 +25,7 @@ done
 for file in "$HOME/.Xkbmap" "/etc/X11/Xkbmap"; do
     if [ -f "$file" ]; then
         echo "Loading keymap: $file"
-        setxkbmap `cat "$file"`
+        setxkbmap $(< "$file")
         XKB_IN_USE=yes
     fi
 done
@@ -69,13 +53,4 @@ unset XKB_IN_USE
 #     done
 # fi
 
-
-function process_not_running() {
-	local _proc;
-	for _proc in "$@"; do {
-		pgrep "$_proc" 1>/dev/null || return 1;
-	} done
-}
-
-# Desktop session
-source $HOME/.xdesktop.xfce;
+exec dbus-launch --exit-with-session xfce4-session;

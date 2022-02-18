@@ -20,4 +20,6 @@ To get started with Windows development on Gitpod, copy the contents of this fol
 
 ## Notes & caveats
 
+If you need to increase the DPI, go to `Settings > Settings Manager > Appearance > Fonts > DPI`
+
 This uses VNC technology and hence we are limited to software-rendering.

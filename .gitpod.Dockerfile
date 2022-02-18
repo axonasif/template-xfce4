@@ -1,31 +1,29 @@
-FROM gitpod/workspace-full:latest
+FROM gitpod/workspace-base:latest
 
 USER root
 
-RUN curl -sSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
-  && echo "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
-  && install-packages xvfb x11vnc openjfx libopenjfx-java \
-                    xfce4 apt-transport-https google-chrome-stable dbus dbus-x11 gnome-keyring tmux
+# Install Desktop-ENV, tools and ungoogled_chromium
+RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections \
+    && curl -sSL https://download.opensuse.org/repositories/home:/ungoogled_chromium/Ubuntu_Focal/Release.key | apt-key add - \
+  && echo 'deb http://download.opensuse.org/repositories/home:/ungoogled_chromium/Ubuntu_Focal/ /' > /etc/apt/sources.list.d/ungoogled_chromium.list \
+  && install-packages xfce4 xfce4-terminal \
+  tigervnc-standalone-server tigervnc-xorg-extension \
+  dbus dbus-x11 gnome-keyring \
+  tmux ungoogled-chromium
 
 # Install novnc
 RUN git clone --depth 1 https://github.com/novnc/noVNC.git /opt/novnc \
-    && git clone --depth 1 https://github.com/novnc/websockify /opt/novnc/utils/websockify
+    && git clone --depth 1 https://github.com/novnc/websockify /opt/novnc/utils/websockify \
+    && find /opt/novnc -type d -name '.git' -exec rm -rf '{}' +;
 COPY novnc-index.html /opt/novnc/index.html
 
 # Add VNC startup script
-COPY start-vnc-session.sh /usr/bin/
-RUN chmod +x /usr/bin/start-vnc-session.sh
+COPY gp-vncsession /usr/bin/
+RUN chmod 0755 $(which gp-vncsession)
+RUN printf '%s\n' 'export DISPLAY=:0' "gp-vncsession" >> ~/.bashrc
 
-# This is a bit of a hack. At the moment we have no means of starting background
-# tasks from a Dockerfile. This workaround checks, on each bashrc eval, if the X
-# server is running on screen 0, and if not starts Xvfb, x11vnc and novnc.
-RUN printf '%s\n' 'export DISPLAY=:0' \
-    "test ! -e /tmp/.X0-lock && tmux new-session -d -s runlogs '/usr/bin/start-vnc-session.sh'" >> ~/.bashrc
-
-USER gitpod
-
-RUN printf '%s\n' '#!/bin/sh' \
-                    'exec dbus-launch --exit-with-session xfce4-session' > "$HOME/.xdesktop.xfce"
-    
+# Add X11 dotfiles
 COPY --chown=gitpod:gitpod .Xresources $HOME/
 COPY --chown=gitpod:gitpod .xinitrc $HOME/
+
+USER gitpod
