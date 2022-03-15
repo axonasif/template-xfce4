@@ -1,5 +1,4 @@
-image:
-  file: .gitpod.Dockerfile
+image: axonasif/gitpod-workspace-full-vnc:latest
 
 tasks:
   - name: Open chromium browser
